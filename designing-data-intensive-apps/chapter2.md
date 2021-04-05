@@ -30,13 +30,71 @@ Driving forces behind adoption of NoSQL or *Not Only SQL* databases:
 #### Relational model
 - A relation (table) is a collection of tuples (rows)
 - query optimiser decides which parts of query to execute in which order and which indexes to use. 
-- made it easier to add features to application
+- general purpose optimizer made it easier to add features to application
 
+### Relational vs Document Databases Today
+- document data model: schema flexibility, better performance due to locality, sometimes closer to data structures used by application
+- relational model: better support for joins, many-to-one and many-to-many relationships
+- if application data has document-like structure, use document model. _Shredding_ (splitting document-like structure into multiple tables) can cause complicated application code
+- if application data has many-to-many relationships, and you are using the document model, can emulate joins by making multiple requests or denormalizing the data. This moves complexity into application code leading to worse performance.
 
+#### Schema-on-write vs. Schema-on-read
+- Document databases and JSON structures don't enforce schemas - arbitrary keys and values can be added to a document and clients have no guarantee for what fields are present
+- Document databases are sometimes called _schemaless_, but more accurately _schema-on-read_ in contrast to schema-on-write. 
+- Schema-on-read is similar to dynamic type checking and schema-on-write is similar to static (compile-time) type checking
+- schema-on-read approach advantageous if data is heterogeneous (many different object types or data structure determined by external systems)
+
+#### Data locality for queries
+If application needs access to entire document, there is performance advantage to storage locality.
+- database loads the entire document even if you access part of it
+- on updates, entire document needs to be rewritten. In-place updates only possible if encoding size is not changed
+- need to keep document sizes small and avoid writes that increase document size
+
+Relational and document databases are converging over time. 
+- PostgreSQL supports JSON documents, RethinkDB supports joins, MongoDB drivers auto resolve document references (client-side join) 
 
 ***
 
 ## Query Languages for Data
-- 
-## Graph-like Data Models
+- SQL is a declarative language - describe pattern of data you want, but not _how_ to acheive that goal.
+- declarative language hides implementation details, making it possible to introduce performance improvements without changes to queries
+- declarative languages are faster in parallel execution because they only specify pattern of results, not the algorithm to determine the results. Imperative code is harder to parallelize because it specifies instructions that must be performed in a particular order
 
+In a web browser, using declarative CSS styling is much better than manipulating styles imperatively in JavaScript. 
+
+### MapReduce Querying
+- MapReduce is a programming model for processing large amounts of data popularized by Google.
+```js
+db.observations.mapReduce(
+    function map() { 2
+        var year  = this.observationTimestamp.getFullYear();
+        var month = this.observationTimestamp.getMonth() + 1;
+        emit(year + "-" + month, this.numAnimals); 3
+    },
+    function reduce(key, values) { 4
+        return Array.sum(values); 5
+    },
+    {
+        query: { family: "Sharks" }, 1
+        out: "monthlySharkReport" 6
+    }
+);
+```
+- map and reduce must be pure functions. This allows db to run functions in any order
+- usability problem with MapReduce is that you have to write 2 coordinated functions. MongoDB added support for declarative query language called _aggregation pipeline_
+```js
+db.observations.aggregate([
+    { $match: { family: "Sharks" } },
+    { $group: {
+        _id: {
+            year:  { $year:  "$observationTimestamp" },
+            month: { $month: "$observationTimestamp" }
+        },
+        totalAnimals: { $sum: "$numAnimals" }
+    } }
+]);
+```
+
+***
+
+## Graph-Like Data Models
