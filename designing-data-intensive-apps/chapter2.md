@@ -98,3 +98,35 @@ db.observations.aggregate([
 ***
 
 ## Graph-Like Data Models
+- Model data as graph if have many many-to-many relationships
+- A graph has _vertices_ and _edges_
+- There are different ways of structuring and querying data - the _property graph_ model (implemented by Neo4j, Titan, InfiniteGraph) and _triple-store_ model (Datomic, AllgroGraph).
+
+### Property Graphs
+- each vertex consists of:
+ - unique identifier
+ - set of outgoing + incoming edges
+ - collection of properties (key-value pairs)
+- each edge consists of:
+ - unique identifier
+ - tail (start) and end (tail) vertices
+ - label to describe relationship between two vertices
+ - collection of properties (key-value pairs)
+Graphs are flexible for data modelling and are good for evolvability.
+
+### Cyper Query Language
+- _Cypher_ is a declarative query language for property graphs created for Neo4j
+- Graph queries in SQL: In relational DB, you know in advice which/ how many joins you need. You need to traverse a variable number of edges in a graph.
+ - E.g. in Cypher, :WITHIN*0.. means "follow a WITHIN edge, zero or more times" like the regex * operator
+ - variable-length traversal paths in query can be expressed using _recursive common table expressions_ (WITH RECURSIVE syntax)
+
+### Triple-Stores and SPARQL
+- In triple-store model, all info is stored in three-part statements: (_subject_, _predicate_, _object_)
+- if object is vertex, predicate is edge (e.g. lucy bornIn usa). If object is string, predicate is property (e.g. lucy age 33)
+
+_SPARQL_ is a query language for triple-stores using RDF data model.
+
+### The Foundation: Datalog
+_Datalog_ provides the foundation that later query languages build on. The data model is similar to triple-store. Instead of (_subject_, _predicate_, _object_), it is _predicate_(_subject_, _object_)
+- we define rules that tell DB about new predicates. Rules can refer to other rules
+- rules can be combined and reused in different queries
