@@ -115,15 +115,44 @@ Most common type of multi-dimensional index is _concatenated index_, where key i
 *** 
 
 ## Transaction Processing or Analytics?
+- A _transaction_ is a group of reads and writes that form a logical unit. This access pattern became known as online transaction processing (OLTP)
+- Data analytics have different access patterns - query needs to scan over huge number of records, only reading a few columns per record and calculating aggregate statistics. This pattern is called online analytic processing (OLAP)
+
 ### Data Warehousing
+- A separate database that analysts can query without affecting the performance of concurrently executing transactions
+- Contains read-only data that is extracted from OLTP databases, transformed into analysis-friendly schema, cleaned up and loaded into data warehouse (_Extract-Transform-Load_ or _ETL_ process)
+- Data warehouse can be optimized for analytic access patterns
+
+- data model of data warehouse is most commonly relational. Most database vendors focus on supporting either transaction processing or analytic workloads.
+
 ### Stars and Snowflakes: Schemas for Analytics
+- Data warehouses used in formulaic style known as _star schema_ or _dimensional modeling_
+- Facts are captured as individual events as it allows maximum flexibility of analysis. The table can become extremely large
+- Dimensions represent the _who_, _what_, _where_, _when_, _how_ and _why_ of the event
+- "Star schema" -> when table relationships are visualized, fact table is in the middle, surrounded by its dimension tables, like the rays of a star
+- _Snowflake schema_: dimensions further broken down into subdimensions. They are more normalized than star schemas, but star schemas are easier to work with
 
 ***
 
 ## Column-Oriented Storage
+- In row-oriented storage engines (e.g. most OLTP databases), all the values from one row of a table are stored next to each other. The engine will load all these rows into memory, parse them, filter based on conditions.
+- In column-oriented storage, each column is stored in separate file. The query only needs to read and parse columns used in query
 
 ### Column Compression
+- Column storage can be compressed as values are often repetitive. Different techniques like bitmap encoding can be used.
+- Column storage are also good for efficiently using CPU cycles. By fitting in more rows through column compression, and using vectorized processing (bitwise OR and AND operations directly on compressed data)
+
 ### Sort Order in Column Storage
+- Data needs to be sorted an entire row at a time.
+- Sorting data helps with column compression. Compression effect is strongest on first sort key. Columns further down sorting priority will not compress well.
+- Having multiple sort orders is similar to multiple secondary indexes
+
 ### Writing to Column-Oriented Storage
+- Update-in-place approach, like B-trees is not possible. If inserting a row in the middle of a sorted table, need to rewrite all the column files
+- Writes can be executed using LSM-trees
+
 ### Aggregation: Data Cubes and Materialized Views
+- Materialized aggregates are cached aggregates that queries use most often
+- Cache can be created through _materialized view_ - a table-like object that contains the results of some query
+- When underlying data changes, view needs to be updated. The database can do it automatically, but writes would be more expensive
 
